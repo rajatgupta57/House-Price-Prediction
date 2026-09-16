@@ -3,7 +3,7 @@ app.py
 =======
 Modern, Clean-White Real Estate Valuation Interface.
 Features a thick persistent navigation bar, state-based view routing,
-a dedicated About section, and a slider for area selection.
+a dedicated About section, and expanded input limits.
 """
 
 import json
@@ -355,20 +355,22 @@ if st.session_state.page == "Home":
             else:
                 selected_location = st.text_input("📍 Location (Locality)", placeholder="Enter locality")
 
-            # Clean Slider for Area Selection
+            # Min value is now 1.0 sqft
             area = st.slider(
                 "📐 Area (sqft)",
-                min_value=300.0,
-                max_value=15000.0,
+                min_value=1.0,
+                max_value=25000.0,
                 value=1200.0,
-                step=50.0,
-                help="Slide to select total carpet area"
+                step=1.0,
+                help="Slide or click the number to type exact square footage"
             )
 
-            bhk_options = ["Select BHK", 1, 2, 3, 4, 5, 6, 7, 8]
+            # Expanded up to 50 BHK
+            bhk_options = ["Select BHK"] + list(range(1, 51))
             selected_bhk = st.selectbox("🛏️ BHK", options=bhk_options, index=0)
 
-            bath_options = ["Select Bathrooms", 1, 2, 3, 4, 5, 6]
+            # Expanded up to 50 Bathrooms
+            bath_options = ["Select Bathrooms"] + list(range(1, 51))
             selected_bath = st.selectbox("🚿 Bathrooms", options=bath_options, index=0)
 
             predict_clicked = st.button("🧮 Predict Price", key="predict_btn", use_container_width=True)
