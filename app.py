@@ -1,9 +1,8 @@
 """
 app.py
 =======
-Modern, Clean-White Real Estate Valuation Interface.
-Matches custom mockup: clean white aesthetic, sticky navbar,
-form card, dedicated result overview, and model metrics.
+Pixel-accurate recreation of the clean white House Price Prediction UI.
+Overrides Streamlit dark-mode input defaults with strict CSS targeting.
 """
 
 import json
@@ -25,12 +24,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ----------------- SESSION STATE MANAGEMENT -----------------
 if "prediction_data" not in st.session_state:
     st.session_state.prediction_data = None
 
 
-# ----------------- ASSET & DATA LOADERS -----------------
 @st.cache_resource
 def load_model():
     if not MODEL_PATH.exists():
@@ -58,7 +55,7 @@ model = load_model()
 localities = load_localities()
 results = load_results()
 
-# Indian Numbering Format Helper (e.g., 78,50,000)
+
 def format_inr(number):
     s = f"{int(round(number))}"
     if len(s) <= 3:
@@ -74,35 +71,36 @@ def format_inr(number):
     return ",".join(parts) + "," + last_three
 
 
-# ----------------- CUSTOM WHITE CSS SYSTEM -----------------
+# ----------------- RIGID LIGHT-THEME INJECTIONS -----------------
 st.markdown(
     """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-    /* Global White Reset */
-    html, body, [class*="css"], .stApp {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    /* 1. Global Reset to Pure White */
+    html, body, [data-testid="stAppViewContainer"], .stApp {
         background-color: #ffffff !important;
-        color: #1e293b;
+        color: #1e293b !important;
+        font-family: 'Inter', sans-serif !important;
     }
 
-    #MainMenu, header, footer { visibility: hidden !important; }
+    #MainMenu, header, footer { display: none !important; }
+
     .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 2rem !important;
-        max-width: 860px !important;
+        padding-top: 1.2rem !important;
+        padding-bottom: 3rem !important;
+        max-width: 820px !important;
     }
 
-    /* Top Navbar */
+    /* 2. Top Navigation Bar */
     .nav-bar {
-        background-color: #132742;
+        background-color: #142742;
         border-radius: 10px;
-        padding: 14px 24px;
+        padding: 16px 28px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 28px;
+        margin-bottom: 32px;
     }
     .nav-title {
         color: #ffffff;
@@ -110,14 +108,14 @@ st.markdown(
         font-weight: 700;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
     }
     .nav-links {
         display: flex;
-        gap: 24px;
+        gap: 28px;
     }
     .nav-links span {
-        color: #e2e8f0;
+        color: #cbd5e1;
         font-size: 0.95rem;
         cursor: pointer;
         font-weight: 500;
@@ -125,189 +123,208 @@ st.markdown(
     .nav-links span.active {
         color: #ffffff;
         border-bottom: 2px solid #3b82f6;
-        padding-bottom: 2px;
+        padding-bottom: 3px;
     }
 
-    /* Hero Banner Area */
+    /* 3. Hero Section */
     .hero-container {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 20px;
-        margin-bottom: 30px;
-        padding: 0 4px;
+        gap: 24px;
+        margin-bottom: 32px;
     }
     .hero-text h1 {
-        font-size: 2.1rem;
+        font-size: 2.3rem;
         font-weight: 800;
-        color: #0f172a;
-        margin-bottom: 8px;
-        letter-spacing: -0.02em;
+        color: #091e42;
+        margin: 0 0 10px 0;
+        letter-spacing: -0.025em;
     }
     .hero-text p {
-        font-size: 1.02rem;
+        font-size: 1rem;
         color: #3b82f6;
         line-height: 1.5;
         margin: 0;
+        max-width: 420px;
     }
     .hero-image {
         width: 320px;
-        height: 180px;
-        border-radius: 20px;
+        height: 190px;
+        border-radius: 16px;
         object-fit: cover;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
 
-    /* Clean Card Container */
-    .form-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 32px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-        margin-bottom: 28px;
-    }
-    .form-title {
-        font-size: 1.35rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 24px;
+    /* 4. Main White Card Wrapper */
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        padding: 28px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+        margin-bottom: 24px !important;
     }
 
-    /* Success Alert */
-    .success-alert {
-        background-color: #eaf8ee;
-        border: 1px solid #bbf7d0;
-        color: #166534;
+    /* 5. Force Form Labels to Dark Slate */
+    [data-testid="stWidgetLabel"] label,
+    [data-testid="stWidgetLabel"] p {
+        font-size: 0.92rem !important;
+        font-weight: 600 !important;
+        color: #334155 !important;
+        margin-bottom: 6px !important;
+    }
+
+    /* 6. Force Input Fields to Clean White with Slate Borders */
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="input"] > div,
+    input[type="number"],
+    input[type="text"] {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        min-height: 44px !important;
+    }
+    div[data-baseweb="select"] * {
+        color: #0f172a !important;
+    }
+    div[data-baseweb="select"] svg {
+        fill: #64748b !important;
+    }
+
+    /* Hover & Active States on Inputs */
+    div[data-baseweb="select"] > div:hover,
+    div[data-baseweb="input"] > div:hover {
+        border-color: #3b82f6 !important;
+    }
+
+    /* 7. Predict & Action Buttons */
+    div.stButton > button {
+        background-color: #2563eb !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        padding: 12px 24px !important;
+        height: auto !important;
+        margin-top: 10px !important;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2) !important;
+        transition: all 0.2s ease !important;
+    }
+    div.stButton > button:hover {
+        background-color: #1d4ed8 !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+    }
+
+    /* Secondary 'Make Another Prediction' outline style */
+    .reset-btn div.stButton > button {
+        background-color: #ffffff !important;
+        color: #2563eb !important;
+        border: 1px solid #bfdbfe !important;
+        box-shadow: none !important;
+    }
+    .reset-btn div.stButton > button:hover {
+        background-color: #eff6ff !important;
+    }
+
+    /* 8. Result Components */
+    .success-badge {
+        background-color: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #065f46;
         padding: 14px 20px;
         border-radius: 8px;
-        font-size: 0.95rem;
         font-weight: 600;
+        font-size: 0.95rem;
         display: flex;
         align-items: center;
         gap: 10px;
-        margin-bottom: 26px;
+        margin-bottom: 24px;
     }
 
-    /* Main Result Header Card */
-    .result-main-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 32px 24px;
-        text-align: center;
-        margin-bottom: 24px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-    }
-    .result-badge {
+    .result-house-badge {
         width: 74px;
         height: 74px;
+        background-color: #e0f2fe;
         border-radius: 50%;
-        background-color: #dbeafe;
-        color: #2563eb;
         display: flex;
         align-items: center;
         justify-content: center;
         margin: 0 auto 16px auto;
     }
-    .result-caption {
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 6px;
-    }
-    .result-price {
-        font-size: 2.5rem;
+
+    .result-price-text {
+        font-size: 2.75rem;
         font-weight: 800;
-        color: #2563eb;
+        color: #1d4ed8;
         letter-spacing: -0.02em;
-    }
-    .result-approx {
-        font-size: 0.9rem;
-        color: #64748b;
-        margin-top: 4px;
+        margin: 4px 0;
     }
 
-    /* Summary Detail Table */
-    .summary-box {
-        background: #ffffff;
+    .summary-card {
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 16px 24px;
-        margin-bottom: 28px;
+        border-radius: 12px;
+        padding: 18px 22px;
+        background: #ffffff;
+        margin-bottom: 24px;
     }
-    .summary-header {
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 14px;
-    }
-    .summary-row {
+    .summary-item {
         display: flex;
-        align-items: center;
         justify-content: space-between;
-        padding: 10px 0;
+        align-items: center;
+        padding: 12px 0;
         border-bottom: 1px solid #f1f5f9;
         font-size: 0.95rem;
     }
-    .summary-row:last-child { border-bottom: none; }
-    .summary-row-label {
+    .summary-item:last-child { border-bottom: none; }
+    .summary-label {
         color: #475569;
+        font-weight: 500;
         display: flex;
         align-items: center;
-        gap: 12px;
-        font-weight: 500;
+        gap: 8px;
     }
-    .summary-row-val {
+    .summary-value {
         color: #0f172a;
-        font-weight: 600;
+        font-weight: 700;
     }
 
-    /* Model Information Cards */
-    .metric-grid {
+    .metrics-wrapper {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 16px;
         margin-bottom: 24px;
     }
-    .metric-card {
-        background: #ffffff;
+    .metric-box {
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 20px 18px;
+        border-radius: 12px;
+        padding: 18px 20px;
+        background: #ffffff;
     }
-    .metric-card-title {
+    .metric-label {
         font-size: 0.85rem;
+        color: #64748b;
         font-weight: 600;
-        color: #475569;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }
-    .metric-card-val {
+    .metric-val {
         font-size: 1.45rem;
         font-weight: 800;
     }
 
-    /* Button Tweaks */
-    div.stButton > button {
-        border-radius: 8px !important;
-        padding: 0.65rem 1.5rem !important;
-        font-size: 0.95rem !important;
-        font-weight: 600 !important;
-    }
-
-    /* Footer */
-    .footer-note {
+    .app-footer {
         text-align: center;
         font-size: 0.85rem;
-        color: #64748b;
-        margin-top: 40px;
+        color: #94a3b8;
+        margin-top: 36px;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# ----------------- TOP NAVBAR -----------------
+# ----------------- NAVIGATION -----------------
 st.markdown(
     """
     <div class="nav-bar">
@@ -326,9 +343,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ----------------- VIEW ROUTING -----------------
+# ----------------- VIEW 1: INPUT -----------------
 if st.session_state.prediction_data is None:
-    # ----------------- VIEW 1: INPUT FORM -----------------
     st.markdown(
         """
         <div class="hero-container">
@@ -336,14 +352,14 @@ if st.session_state.prediction_data is None:
                 <h1>House Price Prediction</h1>
                 <p>Enter property details below to get an estimated house price using Machine Learning.</p>
             </div>
-            <img class="hero-image" src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80" alt="House">
+            <img class="hero-image" src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=700&q=80" alt="House">
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    with st.container():
-        st.markdown('<div class="form-title">Property Details</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<div style="font-size: 1.3rem; font-weight: 700; color: #0f172a; margin-bottom: 18px;">Property Details</div>', unsafe_allow_html=True)
 
         if localities:
             selected_location = st.selectbox(
@@ -352,7 +368,7 @@ if st.session_state.prediction_data is None:
                 index=0,
             )
         else:
-            selected_location = st.text_input("📍 Location (Locality)", placeholder="Enter locality name")
+            selected_location = st.text_input("📍 Location (Locality)", placeholder="Enter locality")
 
         area = st.number_input(
             "📐 Area (sqft)",
@@ -360,7 +376,7 @@ if st.session_state.prediction_data is None:
             max_value=25000.0,
             value=0.0,
             step=50.0,
-            help="Enter property carpet area in square feet",
+            placeholder="Enter area in square feet",
         )
 
         bhk_options = ["Select BHK", 1, 2, 3, 4, 5, 6, 7, 8]
@@ -374,17 +390,17 @@ if st.session_state.prediction_data is None:
         if predict_clicked:
             errors = []
             if selected_location in ["Select Location", ""]:
-                errors.append("Please select a valid location.")
+                errors.append("Please select a location.")
             if area <= 0:
-                errors.append("Please enter an area greater than 0 sqft.")
+                errors.append("Please enter an area in sqft greater than 0.")
             if selected_bhk == "Select BHK":
-                errors.append("Please select the number of BHK.")
+                errors.append("Please choose a BHK count.")
             if selected_bath == "Select Bathrooms":
-                errors.append("Please select the number of Bathrooms.")
+                errors.append("Please choose the number of bathrooms.")
 
             if errors:
-                for e in errors:
-                    st.error(e)
+                for err in errors:
+                    st.error(err)
             elif model is None:
                 st.error("Model file not found at `model/house_price_model.pkl`.")
             else:
@@ -411,15 +427,14 @@ if st.session_state.prediction_data is None:
                 except Exception as exc:
                     st.error(f"Inference error: {exc}")
 
+# ----------------- VIEW 2: RESULTS -----------------
 else:
-    # ----------------- VIEW 2: RESULTS DASHBOARD -----------------
     data = st.session_state.prediction_data
 
-    # Success Top Banner
     st.markdown(
         """
-        <div class="success-alert">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#16a34a">
+        <div class="success-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#059669">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
             </svg>
             Prediction completed successfully!
@@ -428,52 +443,51 @@ else:
         unsafe_allow_html=True,
     )
 
-    # Large Result Card
-    formatted_val = format_inr(data["price"])
+    with st.container(border=True):
+        st.markdown(
+            f"""
+            <div style="text-align: center; padding: 12px 0;">
+                <div class="result-house-badge">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="#2563eb">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                    </svg>
+                </div>
+                <div style="font-size: 1.15rem; font-weight: 700; color: #1e293b;">Estimated House Price</div>
+                <div class="result-price-text">₹ {format_inr(data['price'])}</div>
+                <div style="font-size: 0.9rem; color: #64748b;">(Approx.)</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # Details Box
     st.markdown(
         f"""
-        <div class="result-main-card">
-            <div class="result-badge">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="#2563eb">
-                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-                </svg>
+        <div class="summary-card">
+            <div style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Your Input Details</div>
+            <div class="summary-item">
+                <div class="summary-label">📍 Location</div>
+                <div class="summary-value">{data['location']}</div>
             </div>
-            <div class="result-caption">Estimated House Price</div>
-            <div class="result-price">₹ {formatted_val}</div>
-            <div class="result-approx">(Approx.)</div>
+            <div class="summary-item">
+                <div class="summary-label">📐 Area (sqft)</div>
+                <div class="summary-value">{int(data['area']):,}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">🛏️ BHK</div>
+                <div class="summary-value">{data['bhk']}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">🚿 Bathrooms</div>
+                <div class="summary-value">{data['bathrooms']}</div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    # Input Details Summary Card
-    st.markdown(
-        f"""
-        <div class="summary-box">
-            <div class="summary-header">Your Input Details</div>
-            <div class="summary-row">
-                <div class="summary-row-label">📍 Location</div>
-                <div class="summary-row-val">{data['location']}</div>
-            </div>
-            <div class="summary-row">
-                <div class="summary-row-label">📐 Area (sqft)</div>
-                <div class="summary-row-val">{int(data['area']):,}</div>
-            </div>
-            <div class="summary-row">
-                <div class="summary-row-label">🛏️ BHK</div>
-                <div class="summary-row-val">{data['bhk']}</div>
-            </div>
-            <div class="summary-row">
-                <div class="summary-row-label">🚿 Bathrooms</div>
-                <div class="summary-row-val">{data['bathrooms']}</div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    # Model Evaluation Metrics
-    st.markdown('<div class="summary-header">Model Information</div>', unsafe_allow_html=True)
+    # Model Telemetry
+    st.markdown('<div style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Model Information</div>', unsafe_allow_html=True)
 
     r2_val = f"{results['r2_score']:.2f}" if results and "r2_score" in results else "0.82"
     mae_val = f"₹ {format_inr(results['mae'])}" if results and "mae" in results else "₹ 12,45,000"
@@ -481,31 +495,31 @@ else:
 
     st.markdown(
         f"""
-        <div class="metric-grid">
-            <div class="metric-card">
-                <div class="metric-card-title">R² Score</div>
-                <div class="metric-card-val" style="color: #10b981;">{r2_val}</div>
+        <div class="metrics-wrapper">
+            <div class="metric-box">
+                <div class="metric-label">R² Score</div>
+                <div class="metric-val" style="color: #10b981;">{r2_val}</div>
             </div>
-            <div class="metric-card">
-                <div class="metric-card-title">MAE</div>
-                <div class="metric-card-val" style="color: #2563eb;">{mae_val}</div>
+            <div class="metric-box">
+                <div class="metric-label">MAE</div>
+                <div class="metric-val" style="color: #2563eb;">{mae_val}</div>
             </div>
-            <div class="metric-card">
-                <div class="metric-card-title">RMSE</div>
-                <div class="metric-card-val" style="color: #8b5cf6;">{rmse_val}</div>
+            <div class="metric-box">
+                <div class="metric-label">RMSE</div>
+                <div class="metric-val" style="color: #8b5cf6;">{rmse_val}</div>
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    # Reset Action
+    st.markdown('<div class="reset-btn">', unsafe_allow_html=True)
     if st.button("🔄 Make Another Prediction", use_container_width=True):
         st.session_state.prediction_data = None
         st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
-# ----------------- FOOTER -----------------
 st.markdown(
-    '<div class="footer-note">House Price Prediction &nbsp;|&nbsp; Streamlit</div>',
+    '<div class="app-footer">House Price Prediction &nbsp;|&nbsp; Streamlit</div>',
     unsafe_allow_html=True,
 )
