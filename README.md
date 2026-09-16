@@ -22,7 +22,7 @@ and exposes the trained model through a simple Streamlit web app.
 
 ## 2. Dataset Information
 
-- **Source:** https://github.com/tarunsingamsetti52/House_price_prediction
+- **Source:** https://github.com
 - **File:** `Delhi house data.csv`
 - **Raw columns in the file:** `Area, BHK, Bathroom, Furnishing, Locality, Parking, Price, Status, Transaction, Type, Per_Sqft`
 - **Columns actually used by this project:**
@@ -130,7 +130,7 @@ pip install -r requirements.txt
 ## 8. How to Train the Model
 
 1. Download `Delhi house data.csv` from
-   https://github.com/tarunsingamsetti52/House_price_prediction and place it
+   https://github.com/
    inside the `data/` folder (see `data/README.md`).
 2. Run:
 
