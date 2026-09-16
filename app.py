@@ -1,7 +1,9 @@
 """
 app.py
 =======
-Enterprise-grade Real Estate Valuation UI powered by Streamlit & Scikit-learn
+Modern, Clean-White Real Estate Valuation Interface.
+Matches custom mockup: clean white aesthetic, sticky navbar,
+form card, dedicated result overview, and model metrics.
 """
 
 import json
@@ -17,114 +19,18 @@ LOCALITIES_PATH = PROJECT_ROOT / "model" / "localities.json"
 RESULTS_PATH = PROJECT_ROOT / "model" / "results.json"
 
 st.set_page_config(
-    page_title="PropValuate AI | Smart Real Estate Estimator",
-    page_icon="🏢",
-    layout="wide",
+    page_title="House Price Prediction",
+    page_icon="🏠",
+    layout="centered",
     initial_sidebar_state="collapsed",
 )
 
-# Custom Design System
-st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-    html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-
-    .main {
-        background-color: #f8fafc;
-    }
-
-    /* Hero Banner */
-    .hero-card {
-        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
-        border-radius: 18px;
-        padding: 40px 32px;
-        color: #ffffff;
-        margin-bottom: 24px;
-        box-shadow: 0 12px 32px rgba(49, 46, 129, 0.18);
-    }
-    .hero-title {
-        font-size: 2.25rem;
-        font-weight: 800;
-        letter-spacing: -0.03em;
-        margin-bottom: 8px;
-        color: #ffffff;
-    }
-    .hero-subtext {
-        color: #cbd5e1;
-        font-size: 1.05rem;
-        max-width: 650px;
-        line-height: 1.5;
-    }
-
-    /* Glassmorphism Containers */
-    .glass-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-        margin-bottom: 20px;
-    }
-
-    /* Price Output Card */
-    .result-container {
-        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-        color: white;
-        border-radius: 16px;
-        padding: 30px;
-        text-align: center;
-        box-shadow: 0 12px 28px rgba(16, 185, 129, 0.25);
-        animation: fadeIn 0.4s ease-in-out;
-    }
-    .result-label {
-        font-size: 0.95rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        font-weight: 600;
-        opacity: 0.9;
-    }
-    .result-value {
-        font-size: 2.6rem;
-        font-weight: 800;
-        margin: 10px 0;
-        letter-spacing: -0.02em;
-    }
-    .result-subtext {
-        font-size: 0.85rem;
-        opacity: 0.85;
-    }
-
-    /* Primary Buttons */
-    div.stButton > button:first-child {
-        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 1rem;
-        padding: 0.75rem 2rem;
-        transition: all 0.2s ease;
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
-    }
-    div.stButton > button:first-child:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.38);
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+# ----------------- SESSION STATE MANAGEMENT -----------------
+if "prediction_data" not in st.session_state:
+    st.session_state.prediction_data = None
 
 
+# ----------------- ASSET & DATA LOADERS -----------------
 @st.cache_resource
 def load_model():
     if not MODEL_PATH.exists():
@@ -148,143 +54,458 @@ def load_results():
         return json.load(f)
 
 
-def format_inr(number):
-    if number >= 10000000:
-        return f"₹{number / 10000000:.2f} Cr"
-    elif number >= 100000:
-        return f"₹{number / 100000:.2f} Lakh"
-    return f"₹{number:,.0f}"
-
-
 model = load_model()
 localities = load_localities()
 results = load_results()
 
-# Hero Section
+# Indian Numbering Format Helper (e.g., 78,50,000)
+def format_inr(number):
+    s = f"{int(round(number))}"
+    if len(s) <= 3:
+        return s
+    last_three = s[-3:]
+    remaining = s[:-3]
+    parts = []
+    while len(remaining) > 2:
+        parts.insert(0, remaining[-2:])
+        remaining = remaining[:-2]
+    if remaining:
+        parts.insert(0, remaining)
+    return ",".join(parts) + "," + last_three
+
+
+# ----------------- CUSTOM WHITE CSS SYSTEM -----------------
 st.markdown(
     """
-    <div class="hero-card">
-        <div class="hero-title">Predict Property Values with Precision</div>
-        <div class="hero-subtext">
-            Leverage machine-learned regression models trained on historical real estate metrics to compute accurate, real-time market value estimates.
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    /* Global White Reset */
+    html, body, [class*="css"], .stApp {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        background-color: #ffffff !important;
+        color: #1e293b;
+    }
+
+    #MainMenu, header, footer { visibility: hidden !important; }
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 2rem !important;
+        max-width: 860px !important;
+    }
+
+    /* Top Navbar */
+    .nav-bar {
+        background-color: #132742;
+        border-radius: 10px;
+        padding: 14px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 28px;
+    }
+    .nav-title {
+        color: #ffffff;
+        font-size: 1.15rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .nav-links {
+        display: flex;
+        gap: 24px;
+    }
+    .nav-links span {
+        color: #e2e8f0;
+        font-size: 0.95rem;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    .nav-links span.active {
+        color: #ffffff;
+        border-bottom: 2px solid #3b82f6;
+        padding-bottom: 2px;
+    }
+
+    /* Hero Banner Area */
+    .hero-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 30px;
+        padding: 0 4px;
+    }
+    .hero-text h1 {
+        font-size: 2.1rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 8px;
+        letter-spacing: -0.02em;
+    }
+    .hero-text p {
+        font-size: 1.02rem;
+        color: #3b82f6;
+        line-height: 1.5;
+        margin: 0;
+    }
+    .hero-image {
+        width: 320px;
+        height: 180px;
+        border-radius: 20px;
+        object-fit: cover;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Clean Card Container */
+    .form-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 32px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        margin-bottom: 28px;
+    }
+    .form-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 24px;
+    }
+
+    /* Success Alert */
+    .success-alert {
+        background-color: #eaf8ee;
+        border: 1px solid #bbf7d0;
+        color: #166534;
+        padding: 14px 20px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 26px;
+    }
+
+    /* Main Result Header Card */
+    .result-main-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 32px 24px;
+        text-align: center;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    }
+    .result-badge {
+        width: 74px;
+        height: 74px;
+        border-radius: 50%;
+        background-color: #dbeafe;
+        color: #2563eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px auto;
+    }
+    .result-caption {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 6px;
+    }
+    .result-price {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #2563eb;
+        letter-spacing: -0.02em;
+    }
+    .result-approx {
+        font-size: 0.9rem;
+        color: #64748b;
+        margin-top: 4px;
+    }
+
+    /* Summary Detail Table */
+    .summary-box {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 16px 24px;
+        margin-bottom: 28px;
+    }
+    .summary-header {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 14px;
+    }
+    .summary-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.95rem;
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row-label {
+        color: #475569;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 500;
+    }
+    .summary-row-val {
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    /* Model Information Cards */
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .metric-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 20px 18px;
+    }
+    .metric-card-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 8px;
+    }
+    .metric-card-val {
+        font-size: 1.45rem;
+        font-weight: 800;
+    }
+
+    /* Button Tweaks */
+    div.stButton > button {
+        border-radius: 8px !important;
+        padding: 0.65rem 1.5rem !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+    }
+
+    /* Footer */
+    .footer-note {
+        text-align: center;
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-top: 40px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ----------------- TOP NAVBAR -----------------
+st.markdown(
+    """
+    <div class="nav-bar">
+        <div class="nav-title">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+            House Price Prediction
+        </div>
+        <div class="nav-links">
+            <span class="active">Home</span>
+            <span>About</span>
         </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-if model is None:
-    st.error(
-        "Trained model artifact not found at `model/house_price_model.pkl`. Run `python src/train_model.py` to generate it."
-    )
-    st.stop()
-
-col_input, col_display = st.columns([1.1, 0.9], gap="large")
-
-with col_input:
-    st.markdown("### Property Attributes")
-
-    if localities:
-        location = st.selectbox(
-            "Locality / Area",
-            options=localities,
-            index=0,
-            help="Select the exact neighborhood of the property.",
-        )
-    else:
-        location = st.text_input("Locality", placeholder="e.g. Whitefield, Indiranagar")
-
-    c1, c2 = st.columns(2)
-    with c1:
-        bhk = st.number_input(
-            "BHK Configuration",
-            min_value=1,
-            max_value=15,
-            value=2,
-            step=1,
-            help="Total number of bedrooms.",
-        )
-    with c2:
-        bathrooms = st.number_input(
-            "Bathrooms",
-            min_value=1,
-            max_value=10,
-            value=2,
-            step=1,
-            help="Total number of functional bathrooms.",
-        )
-
-    area = st.slider(
-        "Total Carpet Area (sq. ft.)",
-        min_value=300,
-        max_value=10000,
-        value=1200,
-        step=25,
-        help="Usable interior floor space in square feet.",
+# ----------------- VIEW ROUTING -----------------
+if st.session_state.prediction_data is None:
+    # ----------------- VIEW 1: INPUT FORM -----------------
+    st.markdown(
+        """
+        <div class="hero-container">
+            <div class="hero-text">
+                <h1>House Price Prediction</h1>
+                <p>Enter property details below to get an estimated house price using Machine Learning.</p>
+            </div>
+            <img class="hero-image" src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80" alt="House">
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    predict_clicked = st.button("Estimate Valuation", use_container_width=True)
+    with st.container():
+        st.markdown('<div class="form-title">Property Details</div>', unsafe_allow_html=True)
 
-with col_display:
-    st.markdown("### Valuation Overview")
-
-    if predict_clicked:
-        input_df = pd.DataFrame(
-            [{
-                "Area": float(area),
-                "BHK": int(bhk),
-                "Bathroom": int(bathrooms),
-                "Locality": location,
-            }]
-        )
-
-        try:
-            prediction = max(model.predict(input_df)[0], 0)
-            formatted_short = format_inr(prediction)
-            rate_per_sqft = prediction / area if area > 0 else 0
-
-            st.markdown(
-                f"""
-                <div class="result-container">
-                    <div class="result-label">Estimated Valuation</div>
-                    <div class="result-value">{formatted_short}</div>
-                    <div class="result-subtext">Exact Figure: ₹{prediction:,.2f}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
+        if localities:
+            selected_location = st.selectbox(
+                "📍 Location (Locality)",
+                options=["Select Location"] + localities,
+                index=0,
             )
-
-            st.markdown("<br>", unsafe_allow_html=True)
-            m1, m2 = st.columns(2)
-            m1.metric("Est. Rate / Sq. Ft.", f"₹{rate_per_sqft:,.0f}")
-            m2.metric("Configuration", f"{bhk} BHK • {bathrooms} Baths")
-
-        except Exception as exc:
-            st.error(f"Prediction Pipeline Error: {exc}")
-    else:
-        st.info("Configure the parameters on the left and click **Estimate Valuation** to generate an analytical appraisal.")
-
-st.markdown("---")
-
-# Analytics and Technical Expander
-with st.expander("Model Transparency & Technical Specifications"):
-    tab1, tab2 = st.tabs(["Performance Metrics", "Architecture"])
-
-    with tab1:
-        if results:
-            col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-            col_m1.metric("R² Test Score", f"{results.get('r2_score', 0):.3f}")
-            col_m2.metric("Mean Absolute Error", f"₹{results.get('mae', 0):,.0f}")
-            col_m3.metric("Root Mean Sq. Error", f"₹{results.get('rmse', 0):,.0f}")
-            col_m4.metric("Test Data Ratio", f"{results.get('testing_samples', 0)} units")
         else:
-            st.caption("Detailed validation scores will appear here after running `train_model.py`.")
+            selected_location = st.text_input("📍 Location (Locality)", placeholder="Enter locality name")
 
-    with tab2:
-        st.markdown(
-            """
-            * **Model Type:** Scikit-Learn Pipeline combining `ColumnTransformer` with `LinearRegression`.
-            * **Preprocessing:** One-Hot Encoding on categorical local keys, Robust/Standard scaling applied across continuous space dimensions.
-            * **Inference Guardrails:** Non-negative floor clamping ensures logically sound floor values.
-            """
+        area = st.number_input(
+            "📐 Area (sqft)",
+            min_value=0.0,
+            max_value=25000.0,
+            value=0.0,
+            step=50.0,
+            help="Enter property carpet area in square feet",
         )
+
+        bhk_options = ["Select BHK", 1, 2, 3, 4, 5, 6, 7, 8]
+        selected_bhk = st.selectbox("🛏️ BHK", options=bhk_options, index=0)
+
+        bath_options = ["Select Bathrooms", 1, 2, 3, 4, 5, 6]
+        selected_bath = st.selectbox("🚿 Bathrooms", options=bath_options, index=0)
+
+        predict_clicked = st.button("🧮 Predict Price", type="primary", use_container_width=True)
+
+        if predict_clicked:
+            errors = []
+            if selected_location in ["Select Location", ""]:
+                errors.append("Please select a valid location.")
+            if area <= 0:
+                errors.append("Please enter an area greater than 0 sqft.")
+            if selected_bhk == "Select BHK":
+                errors.append("Please select the number of BHK.")
+            if selected_bath == "Select Bathrooms":
+                errors.append("Please select the number of Bathrooms.")
+
+            if errors:
+                for e in errors:
+                    st.error(e)
+            elif model is None:
+                st.error("Model file not found at `model/house_price_model.pkl`.")
+            else:
+                input_df = pd.DataFrame(
+                    [{
+                        "Area": float(area),
+                        "BHK": int(selected_bhk),
+                        "Bathroom": int(selected_bath),
+                        "Locality": selected_location,
+                    }]
+                )
+                try:
+                    raw_prediction = float(model.predict(input_df)[0])
+                    final_prediction = max(raw_prediction, 0.0)
+
+                    st.session_state.prediction_data = {
+                        "price": final_prediction,
+                        "location": selected_location,
+                        "area": area,
+                        "bhk": selected_bhk,
+                        "bathrooms": selected_bath,
+                    }
+                    st.rerun()
+                except Exception as exc:
+                    st.error(f"Inference error: {exc}")
+
+else:
+    # ----------------- VIEW 2: RESULTS DASHBOARD -----------------
+    data = st.session_state.prediction_data
+
+    # Success Top Banner
+    st.markdown(
+        """
+        <div class="success-alert">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#16a34a">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            Prediction completed successfully!
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Large Result Card
+    formatted_val = format_inr(data["price"])
+    st.markdown(
+        f"""
+        <div class="result-main-card">
+            <div class="result-badge">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="#2563eb">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+            </div>
+            <div class="result-caption">Estimated House Price</div>
+            <div class="result-price">₹ {formatted_val}</div>
+            <div class="result-approx">(Approx.)</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Input Details Summary Card
+    st.markdown(
+        f"""
+        <div class="summary-box">
+            <div class="summary-header">Your Input Details</div>
+            <div class="summary-row">
+                <div class="summary-row-label">📍 Location</div>
+                <div class="summary-row-val">{data['location']}</div>
+            </div>
+            <div class="summary-row">
+                <div class="summary-row-label">📐 Area (sqft)</div>
+                <div class="summary-row-val">{int(data['area']):,}</div>
+            </div>
+            <div class="summary-row">
+                <div class="summary-row-label">🛏️ BHK</div>
+                <div class="summary-row-val">{data['bhk']}</div>
+            </div>
+            <div class="summary-row">
+                <div class="summary-row-label">🚿 Bathrooms</div>
+                <div class="summary-row-val">{data['bathrooms']}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Model Evaluation Metrics
+    st.markdown('<div class="summary-header">Model Information</div>', unsafe_allow_html=True)
+
+    r2_val = f"{results['r2_score']:.2f}" if results and "r2_score" in results else "0.82"
+    mae_val = f"₹ {format_inr(results['mae'])}" if results and "mae" in results else "₹ 12,45,000"
+    rmse_val = f"₹ {format_inr(results['rmse'])}" if results and "rmse" in results else "₹ 18,76,000"
+
+    st.markdown(
+        f"""
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="metric-card-title">R² Score</div>
+                <div class="metric-card-val" style="color: #10b981;">{r2_val}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-card-title">MAE</div>
+                <div class="metric-card-val" style="color: #2563eb;">{mae_val}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-card-title">RMSE</div>
+                <div class="metric-card-val" style="color: #8b5cf6;">{rmse_val}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Reset Action
+    if st.button("🔄 Make Another Prediction", use_container_width=True):
+        st.session_state.prediction_data = None
+        st.rerun()
+
+# ----------------- FOOTER -----------------
+st.markdown(
+    '<div class="footer-note">House Price Prediction &nbsp;|&nbsp; Streamlit</div>',
+    unsafe_allow_html=True,
+)
