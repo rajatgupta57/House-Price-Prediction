@@ -1,3 +1,9 @@
+"""
+app.py
+=======
+Enterprise-grade Real Estate Valuation UI powered by Streamlit & Scikit-learn
+"""
+
 import json
 from pathlib import Path
 
@@ -5,215 +11,124 @@ import joblib
 import pandas as pd
 import streamlit as st
 
-
-# ============================================================
-# PAGE CONFIGURATION
-# ============================================================
-
-st.set_page_config(
-    page_title="House Price Prediction",
-    page_icon="🏠",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
-
-
-# ============================================================
-# PATHS
-# ============================================================
-
 PROJECT_ROOT = Path(__file__).resolve().parent
-
 MODEL_PATH = PROJECT_ROOT / "model" / "house_price_model.pkl"
 LOCALITIES_PATH = PROJECT_ROOT / "model" / "localities.json"
 RESULTS_PATH = PROJECT_ROOT / "model" / "results.json"
 
+st.set_page_config(
+    page_title="PropValuate AI | Smart Real Estate Estimator",
+    page_icon="🏢",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
 
-# ============================================================
-# CUSTOM CSS
-# ============================================================
-
+# Custom Design System
 st.markdown(
     """
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-    /* Main page */
-    .stApp {
-        background-color: #f7f8fc;
+    html, body, [class*="css"] {
+        font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
-    .block-container {
-        max-width: 1100px;
-        padding-top: 2rem;
-        padding-bottom: 3rem;
+    .main {
+        background-color: #f8fafc;
     }
 
-    /* Hide Streamlit branding */
-    #MainMenu {
-        visibility: hidden;
+    /* Hero Banner */
+    .hero-card {
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+        border-radius: 18px;
+        padding: 40px 32px;
+        color: #ffffff;
+        margin-bottom: 24px;
+        box-shadow: 0 12px 32px rgba(49, 46, 129, 0.18);
+    }
+    .hero-title {
+        font-size: 2.25rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-bottom: 8px;
+        color: #ffffff;
+    }
+    .hero-subtext {
+        color: #cbd5e1;
+        font-size: 1.05rem;
+        max-width: 650px;
+        line-height: 1.5;
     }
 
-    footer {
-        visibility: hidden;
-    }
-
-    header {
-        visibility: hidden;
-    }
-
-    /* Hero section */
-    .hero {
-        background: linear-gradient(135deg, #172554 0%, #1e3a8a 55%, #2563eb 100%);
-        padding: 42px 45px;
-        border-radius: 22px;
-        color: white;
-        margin-bottom: 28px;
-        box-shadow: 0 12px 30px rgba(30, 58, 138, 0.18);
-    }
-
-    .hero h1 {
-        font-size: 42px;
-        font-weight: 750;
-        margin: 0 0 10px 0;
-        letter-spacing: -1px;
-    }
-
-    .hero p {
-        font-size: 17px;
-        line-height: 1.6;
-        margin: 0;
-        max-width: 760px;
-        color: #e0e7ff;
-    }
-
-    .hero-badge {
-        display: inline-block;
-        background: rgba(255, 255, 255, 0.13);
-        border: 1px solid rgba(255, 255, 255, 0.20);
-        padding: 7px 13px;
-        border-radius: 999px;
-        font-size: 13px;
-        margin-bottom: 16px;
-    }
-
-    /* Section headings */
-    .section-title {
-        font-size: 25px;
-        font-weight: 700;
-        color: #111827;
-        margin-top: 12px;
-        margin-bottom: 4px;
-    }
-
-    .section-subtitle {
-        color: #6b7280;
-        font-size: 15px;
+    /* Glassmorphism Containers */
+    .glass-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
         margin-bottom: 20px;
     }
 
-    /* Input card */
-    .input-card {
-        background: white;
-        padding: 25px 28px 18px 28px;
-        border-radius: 18px;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 5px 18px rgba(15, 23, 42, 0.05);
-        margin-bottom: 22px;
-    }
-
-    /* Prediction card */
-    .prediction-card {
-        background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
-        border: 1px solid #bbf7d0;
-        border-radius: 18px;
-        padding: 28px;
-        margin-top: 24px;
+    /* Price Output Card */
+    .result-container {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 30px;
         text-align: center;
+        box-shadow: 0 12px 28px rgba(16, 185, 129, 0.25);
+        animation: fadeIn 0.4s ease-in-out;
     }
-
-    .prediction-label {
-        color: #166534;
-        font-size: 14px;
-        font-weight: 600;
+    .result-label {
+        font-size: 0.95rem;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        font-weight: 600;
+        opacity: 0.9;
     }
-
-    .prediction-value {
-        color: #14532d;
-        font-size: 38px;
+    .result-value {
+        font-size: 2.6rem;
         font-weight: 800;
-        margin-top: 7px;
+        margin: 10px 0;
+        letter-spacing: -0.02em;
+    }
+    .result-subtext {
+        font-size: 0.85rem;
+        opacity: 0.85;
     }
 
-    .prediction-note {
-        color: #4b5563;
-        font-size: 13px;
-        margin-top: 8px;
-    }
-
-    /* Metric cards */
-    .metric-card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 15px;
-        padding: 20px;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);
-    }
-
-    .metric-label {
-        color: #6b7280;
-        font-size: 13px;
-        margin-bottom: 5px;
-    }
-
-    .metric-value {
-        color: #111827;
-        font-size: 23px;
-        font-weight: 750;
-    }
-
-    /* Info card */
-    .info-card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 18px;
-        padding: 25px 28px;
-        margin-top: 25px;
-        box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
-    }
-
-    /* Button */
-    .stButton > button {
-        width: 100%;
+    /* Primary Buttons */
+    div.stButton > button:first-child {
+        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        color: white;
+        border: none;
         border-radius: 12px;
-        height: 3.1rem;
-        font-size: 16px;
-        font-weight: 650;
+        font-weight: 600;
+        font-size: 1rem;
+        padding: 0.75rem 2rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
+    }
+    div.stButton > button:first-child:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.38);
     }
 
-    /* Inputs */
-    div[data-baseweb="select"] > div,
-    div[data-baseweb="input"] > div {
-        border-radius: 10px;
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
     }
-
     </style>
     """,
     unsafe_allow_html=True,
 )
 
 
-# ============================================================
-# LOAD FILES
-# ============================================================
-
 @st.cache_resource
 def load_model():
     if not MODEL_PATH.exists():
         return None
-
     return joblib.load(MODEL_PATH)
 
 
@@ -221,340 +136,155 @@ def load_model():
 def load_localities():
     if not LOCALITIES_PATH.exists():
         return []
-
-    with open(LOCALITIES_PATH, "r", encoding="utf-8") as file:
-        return json.load(file)
+    with open(LOCALITIES_PATH) as f:
+        return json.load(f)
 
 
 @st.cache_data
 def load_results():
     if not RESULTS_PATH.exists():
         return None
+    with open(RESULTS_PATH) as f:
+        return json.load(f)
 
-    with open(RESULTS_PATH, "r", encoding="utf-8") as file:
-        return json.load(file)
+
+def format_inr(number):
+    if number >= 10000000:
+        return f"₹{number / 10000000:.2f} Cr"
+    elif number >= 100000:
+        return f"₹{number / 100000:.2f} Lakh"
+    return f"₹{number:,.0f}"
 
 
 model = load_model()
 localities = load_localities()
 results = load_results()
 
-
-# ============================================================
-# HERO SECTION
-# ============================================================
-
+# Hero Section
 st.markdown(
     """
-    <div class="hero">
-        <div class="hero-badge">Machine Learning • Regression</div>
-        <h1>House Price Prediction</h1>
-        <p>
-            Estimate the price of a residential property using its location,
-            area, number of bedrooms, and number of bathrooms.
-        </p>
+    <div class="hero-card">
+        <div class="hero-title">Predict Property Values with Precision</div>
+        <div class="hero-subtext">
+            Leverage machine-learned regression models trained on historical real estate metrics to compute accurate, real-time market value estimates.
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-
-# ============================================================
-# MODEL CHECK
-# ============================================================
-
 if model is None:
     st.error(
-        "The trained model could not be found. "
-        "Please make sure `model/house_price_model.pkl` exists in the project."
+        "Trained model artifact not found at `model/house_price_model.pkl`. Run `python src/train_model.py` to generate it."
     )
     st.stop()
 
+col_input, col_display = st.columns([1.1, 0.9], gap="large")
 
-# ============================================================
-# PROPERTY INPUT SECTION
-# ============================================================
-
-st.markdown(
-    '<div class="section-title">Property Details</div>',
-    unsafe_allow_html=True,
-)
-
-st.markdown(
-    '<div class="section-subtitle">'
-    "Enter the details of the property to generate an estimated price."
-    "</div>",
-    unsafe_allow_html=True,
-)
-
-st.markdown('<div class="input-card">', unsafe_allow_html=True)
-
-col1, col2 = st.columns(2, gap="large")
-
-with col1:
+with col_input:
+    st.markdown("### Property Attributes")
 
     if localities:
         location = st.selectbox(
-            "Location",
+            "Locality / Area",
             options=localities,
-            help="Select the locality of the property.",
+            index=0,
+            help="Select the exact neighborhood of the property.",
         )
     else:
-        location = st.text_input(
-            "Location",
-            value="",
-            placeholder="Enter locality",
+        location = st.text_input("Locality", placeholder="e.g. Whitefield, Indiranagar")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        bhk = st.number_input(
+            "BHK Configuration",
+            min_value=1,
+            max_value=15,
+            value=2,
+            step=1,
+            help="Total number of bedrooms.",
+        )
+    with c2:
+        bathrooms = st.number_input(
+            "Bathrooms",
+            min_value=1,
+            max_value=10,
+            value=2,
+            step=1,
+            help="Total number of functional bathrooms.",
         )
 
-    area = st.number_input(
-        "Area (sqft)",
-        min_value=0.0,
-        value=1000.0,
-        step=50.0,
-        help="Enter the total property area in square feet.",
+    area = st.slider(
+        "Total Carpet Area (sq. ft.)",
+        min_value=300,
+        max_value=10000,
+        value=1200,
+        step=25,
+        help="Usable interior floor space in square feet.",
     )
 
-with col2:
+    predict_clicked = st.button("Estimate Valuation", use_container_width=True)
 
-    bhk = st.number_input(
-        "Bedrooms (BHK)",
-        min_value=0,
-        max_value=20,
-        value=2,
-        step=1,
-        help="Enter the number of bedrooms.",
-    )
+with col_display:
+    st.markdown("### Valuation Overview")
 
-    bathrooms = st.number_input(
-        "Bathrooms",
-        min_value=0,
-        max_value=20,
-        value=2,
-        step=1,
-        help="Enter the number of bathrooms.",
-    )
-
-st.markdown("</div>", unsafe_allow_html=True)
-
-
-# ============================================================
-# PREDICTION BUTTON
-# ============================================================
-
-button_col1, button_col2, button_col3 = st.columns([1, 2, 1])
-
-with button_col2:
-    predict_clicked = st.button(
-        "Predict House Price",
-        type="primary",
-    )
-
-
-# ============================================================
-# PREDICTION
-# ============================================================
-
-if predict_clicked:
-
-    errors = []
-
-    if area <= 0:
-        errors.append("Area must be greater than 0.")
-
-    if bhk <= 0:
-        errors.append("Number of bedrooms must be greater than 0.")
-
-    if bathrooms <= 0:
-        errors.append("Number of bathrooms must be greater than 0.")
-
-    if not location:
-        errors.append("Please select or enter a location.")
-
-    if errors:
-
-        for error in errors:
-            st.warning(error)
-
-    else:
-
+    if predict_clicked:
         input_df = pd.DataFrame(
-            [
-                {
-                    "Area": area,
-                    "BHK": bhk,
-                    "Bathroom": bathrooms,
-                    "Locality": location,
-                }
-            ]
+            [{
+                "Area": float(area),
+                "BHK": int(bhk),
+                "Bathroom": int(bathrooms),
+                "Locality": location,
+            }]
         )
 
         try:
-
-            prediction = model.predict(input_df)[0]
-
-            # Negative house prices are not meaningful.
-            prediction = max(prediction, 0)
+            prediction = max(model.predict(input_df)[0], 0)
+            formatted_short = format_inr(prediction)
+            rate_per_sqft = prediction / area if area > 0 else 0
 
             st.markdown(
                 f"""
-                <div class="prediction-card">
-                    <div class="prediction-label">
-                        Estimated House Price
-                    </div>
-
-                    <div class="prediction-value">
-                        ₹{prediction:,.0f}
-                    </div>
-
-                    <div class="prediction-note">
-                        Based on the property details and the trained
-                        Linear Regression model.
-                    </div>
+                <div class="result-container">
+                    <div class="result-label">Estimated Valuation</div>
+                    <div class="result-value">{formatted_short}</div>
+                    <div class="result-subtext">Exact Figure: ₹{prediction:,.2f}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
+            st.markdown("<br>", unsafe_allow_html=True)
+            m1, m2 = st.columns(2)
+            m1.metric("Est. Rate / Sq. Ft.", f"₹{rate_per_sqft:,.0f}")
+            m2.metric("Configuration", f"{bhk} BHK • {bathrooms} Baths")
+
         except Exception as exc:
+            st.error(f"Prediction Pipeline Error: {exc}")
+    else:
+        st.info("Configure the parameters on the left and click **Estimate Valuation** to generate an analytical appraisal.")
 
-            st.error(
-                f"Could not generate a prediction because of an unexpected error: {exc}"
-            )
+st.markdown("---")
 
+# Analytics and Technical Expander
+with st.expander("Model Transparency & Technical Specifications"):
+    tab1, tab2 = st.tabs(["Performance Metrics", "Architecture"])
 
-# ============================================================
-# MODEL PERFORMANCE
-# ============================================================
+    with tab1:
+        if results:
+            col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+            col_m1.metric("R² Test Score", f"{results.get('r2_score', 0):.3f}")
+            col_m2.metric("Mean Absolute Error", f"₹{results.get('mae', 0):,.0f}")
+            col_m3.metric("Root Mean Sq. Error", f"₹{results.get('rmse', 0):,.0f}")
+            col_m4.metric("Test Data Ratio", f"{results.get('testing_samples', 0)} units")
+        else:
+            st.caption("Detailed validation scores will appear here after running `train_model.py`.")
 
-st.markdown(
-    '<div class="section-title">Model Performance</div>',
-    unsafe_allow_html=True,
-)
-
-st.markdown(
-    '<div class="section-subtitle">'
-    "Evaluation results obtained on the held-out test dataset."
-    "</div>",
-    unsafe_allow_html=True,
-)
-
-if results:
-
-    metric1, metric2, metric3 = st.columns(3, gap="medium")
-
-    with metric1:
+    with tab2:
         st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-label">R² Score</div>
-                <div class="metric-value">{results["r2_score"]:.4f}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+            """
+            * **Model Type:** Scikit-Learn Pipeline combining `ColumnTransformer` with `LinearRegression`.
+            * **Preprocessing:** One-Hot Encoding on categorical local keys, Robust/Standard scaling applied across continuous space dimensions.
+            * **Inference Guardrails:** Non-negative floor clamping ensures logically sound floor values.
+            """
         )
-
-    with metric2:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-label">Mean Absolute Error</div>
-                <div class="metric-value">
-                    ₹{results["mae"]:,.0f}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with metric3:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-label">Root Mean Squared Error</div>
-                <div class="metric-value">
-                    ₹{results["rmse"]:,.0f}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-
-# ============================================================
-# PROJECT INFORMATION
-# ============================================================
-
-with st.expander("About this Project"):
-
-    st.markdown(
-        """
-        ### Machine Learning Approach
-
-        This project uses a supervised Machine Learning regression approach
-        to estimate residential property prices.
-
-        **Model:** Linear Regression
-
-        **Input Features:**
-        - Location
-        - Area in square feet
-        - Number of bedrooms (BHK)
-        - Number of bathrooms
-
-        **Preprocessing:**
-        - Median imputation and standard scaling for numerical features
-        - Most-frequent imputation and One-Hot Encoding for location
-
-        **Train/Test Split:** 80:20
-
-        The trained preprocessing pipeline and regression model are stored
-        together and used directly by this application.
-        """
-    )
-
-    if results:
-
-        st.markdown("### Dataset and Training Information")
-
-        info_col1, info_col2, info_col3 = st.columns(3)
-
-        with info_col1:
-            st.metric(
-                "Original Records",
-                results.get("original_records", "N/A"),
-            )
-
-        with info_col2:
-            st.metric(
-                "Training Samples",
-                results.get("training_samples", "N/A"),
-            )
-
-        with info_col3:
-            st.metric(
-                "Testing Samples",
-                results.get("testing_samples", "N/A"),
-            )
-
-
-# ============================================================
-# FOOTER
-# ============================================================
-
-st.markdown(
-    """
-    <div style="
-        text-align: center;
-        color: #9ca3af;
-        font-size: 12px;
-        margin-top: 45px;
-        padding-top: 18px;
-        border-top: 1px solid #e5e7eb;
-    ">
-        House Price Prediction • B.Tech Summer Training Project
-        <br>
-        Built with Python, Scikit-learn and Streamlit
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
