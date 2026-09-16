@@ -1,0 +1,13 @@
+{
+  "training_samples": 911,
+  "testing_samples": 228,
+  "train_test_split": "80:20",
+  "num_input_features_raw": 4,
+  "num_features_after_encoding": 320,
+  "num_categorical_features": 1,
+  "num_numerical_features": 3,
+  "r2_score": 0.5790427750494993,
+  "mae": 7701833.6985965185,
+  "rmse": 16172162.208061846,
+  "num_unique_localities": 365
+}
